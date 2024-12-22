@@ -1,0 +1,54 @@
+name: $(date:yyyyMMdd)$(rev:.r)
+variables:
+- name: SourcesDirectory
+  value: aws-cloudformation-dr
+- name: CloudFormationStackName
+  value: GlueProject-DR-Stack
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - release
+    - develop
+  paths:
+    include:
+    - aws-cloudformation-dr/*
+    exclude:
+    - aws-cloudformation-dr/test/*
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.x'
+        addToPath: true
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r $(SourcesDirectory)/requirements.txt
+      displayName: 'Install dependencies'
+
+- stage: Deploy
+  jobs:
+  - deployment: Deploy
+    environment: 'dev'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: AWSCLI@1
+            inputs:
+              awsCredentials: 'AWS_Credentials'
+              regionName: 'us-east-1'
+              command: 'cloudformation'
+              args: 'deploy --template-file $(SourcesDirectory)/templates/drCloudformation.yaml --stack-name $(CloudFormationStackName) --parameter-overrides file://$(SourcesDirectory)/dev-parameters.json'

@@ -1,0 +1,14 @@
+{
+  "Parameters": {
+    "ProjectCode": "PRJ001",
+    "ProjectName": "Glue-Project",
+    "Environment": "STG-DR",
+    "WorkflowName": "EtlData-Workflow",
+    "TriggerName": "EtlData-Trigger",
+    "JobName": "GlueJob-ETL-Data-Workflow",
+    "S3BucketTemp": "my-temp-bucket",
+    "S3BucketCode": "data-engineer-juanmgart",
+    "ScriptLocation": "scripts/DataWkflow-Job.py",
+    "RoleName": "GlueJobRole"
+  }
+}

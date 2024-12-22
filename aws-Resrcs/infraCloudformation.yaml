@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Glue project CloudFormation template'
+
+########################################
+############### Metadata ################
+########################################
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: 'General TAGs'
+        Parameters:
+          - ProjectCode
+          - ProjectName
+          - Environment
+      - Label:
+          default: 'General Settings'
+        Parameters:
+          - WorkflowName
+          - TriggerName
+          - JobName
+          - S3BucketTemp
+          - S3BucketCode
+          - ScriptLocation
+          - RoleName
+
+########################################
+############## Parameters ##############
+########################################
+Parameters:
+  ProjectCode:
+    Type: String
+    Description: 'Project code'
+    AllowedPattern: '^[A-Z0-9]*$'
+    Default: PRJ001
+  ProjectName:
+    Type: String
+    Description: 'Project name'
+    AllowedPattern: '^[a-zA-Z0-9-]*$'
+    Default: Glue-Project
+  Environment:
+    Type: String
+    Description: 'Environment'
+    AllowedValues:
+      - DEV
+      - STG
+      - PROD
+    Default: DEV
+
+  WorkflowName:
+    Type: String
+    Description: 'Glue workflow name'
+    Default: EtlData-Workflow
+  TriggerName:
+    Type: String
+    Description: 'Trigger name for Glue job'
+    Default: EtlData-Trigger
+  JobName:
+    Type: String
+    Description: 'Glue job name'
+    Default: GlueJob-ETL-Data-Workflow
+  S3BucketTemp:
+    Type: String
+    Description: 'Temporary S3 bucket for Glue job'
+    Default: my-temp-bucket
+  S3BucketCode:
+    Type: String
+    Description: 'S3 bucket for Glue job scripts'
+    Default: data-engineer-juanmgart
+  ScriptLocation:
+    Type: String
+    Description: 'S3 location of the Glue job script'
+    Default: scripts/DataWkflow-Job.py
+  RoleName:
+    Type: String
+    Description: 'IAM role for Glue job'
+    Default: GlueJobRole
+
+########################################
+############## Resources ###############
+########################################
+Resources:
+  GlueWorkflow:
+    Type: AWS::Glue::Workflow
+    Properties:
+      Name: !Sub '${ProjectCode}-${ProjectName}-${WorkflowName}-${Environment}'
+      Description: 'Workflow for Glue project'
+      DefaultRunProperties: {}
+      Tags:
+        ProjectCode: !Ref ProjectCode
+        ProjectName: !Ref ProjectName
+        Environment: !Ref Environment
+
+  GlueJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectCode}-${ProjectName}-${RoleName}-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - glue.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub '${ProjectCode}-${ProjectName}-Policy-${Environment}'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:*
+                  - s3:*
+                  - logs:*
+                Resource: '*'
+
+  GlueJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub '${ProjectCode}-${ProjectName}-${JobName}-${Environment}'
+      Role: !Ref GlueJobRole
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://${S3BucketCode}/${ScriptLocation}'
+      DefaultArguments:
+        --TempDir: !Sub 's3://${S3BucketTemp}/'
+        --job-language: python
+      Tags:
+        ProjectCode: !Ref ProjectCode
+        ProjectName: !Ref ProjectName
+        Environment: !Ref Environment
+
+  GlueJobTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: !Sub '${ProjectCode}-${ProjectName}-${TriggerName}-${Environment}'
+      Type: SCHEDULED
+      Schedule: cron(0 12 * * ? *)
+      Actions:
+        - JobName: !Ref GlueJob
+      WorkflowName: !Ref GlueWorkflow
+      Tags:
+        ProjectCode: !Ref ProjectCode
+        ProjectName: !Ref ProjectName
+        Environment: !Ref Environment

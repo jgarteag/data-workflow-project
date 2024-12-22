@@ -1,0 +1,28 @@
+name: $(date:yyyyMMdd)$(rev:.r)
+variables:
+- name: SourcesDirectory
+  value: glue-DataWorkFlow-Project
+- name: S3BucketName
+  value: datamesh-gluescripts-env-s3
+- name: BucketFolder
+  value: DataEngineer/files/
+
+trigger:
+  batch: 'true'
+  branches:
+    include:
+    - master
+    - release
+    - develop
+
+stages:
+- template: /CI/BuildGlue.yml@templates
+  parameters:
+    SourcesDirectory: $(SourcesDirectory)
+    S3BucketName: $(S3BucketName)
+    BucketFolder: $(BucketFolder)
+- template: /CD/DeployGlue.yml@templates
+  parameters:
+    SourcesDirectory: $(SourcesDirectory)
+    S3BucketName: $(S3BucketName)
+    BucketFolder: $(BucketFolder)

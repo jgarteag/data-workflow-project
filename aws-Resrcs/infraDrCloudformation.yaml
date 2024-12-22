@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Disaster Recovery (DR) CloudFormation template'
+
+########################################
+############### Metadata ################
+########################################
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+      - Label:
+          default: 'General TAGs'
+        Parameters:
+          - ProjectCode
+          - ProjectName
+          - Environment
+      - Label:
+          default: 'DR Settings'
+        Parameters:
+          - DRWorkflowName
+          - DRTriggerName
+          - DRJobName
+          - DRBucketTemp
+          - DRBucketCode
+          - DRScriptLocation
+          - DRRoleName
+
+########################################
+############## Parameters ##############
+########################################
+Parameters:
+  ProjectCode:
+    Type: String
+    Description: 'Project code'
+    AllowedPattern: '^[A-Z0-9]*$'
+    Default: PRJ001
+  ProjectName:
+    Type: String
+    Description: 'Project name'
+    AllowedPattern: '^[a-zA-Z0-9-]*$'
+    Default: Glue-Project
+  Environment:
+    Type: String
+    Description: 'Environment'
+    AllowedValues:
+      - DEV
+      - STG
+      - PROD
+    Default: DEV
+
+  DRWorkflowName:
+    Type: String
+    Description: 'DR Glue workflow name'
+    Default: EtlData-DR-Workflow
+  DRTriggerName:
+    Type: String
+    Description: 'Trigger name for DR Glue job'
+    Default: EtlData-DR-Trigger
+  DRJobName:
+    Type: String
+    Description: 'DR Glue job name'
+    Default: GlueJob-ETL-Data-DR-Workflow
+  DRBucketTemp:
+    Type: String
+    Description: 'Temporary S3 bucket for DR Glue job'
+    Default: my-dr-temp-bucket
+  DRBucketCode:
+    Type: String
+    Description: 'S3 bucket for DR Glue job scripts'
+    Default: data-engineer-dr
+  DRScriptLocation:
+    Type: String
+    Description: 'S3 location of the DR Glue job script'
+    Default: scripts/DataWkflow-DR-Job.py
+  DRRoleName:
+    Type: String
+    Description: 'IAM role for DR Glue job'
+    Default: GlueJobDRRole
+
+########################################
+############## Resources ###############
+########################################
+Resources:
+  DRGlueWorkflow:
+    Type: AWS::Glue::Workflow
+    Properties:
+      Name: !Sub '${ProjectCode}-${ProjectName}-${DRWorkflowName}-${Environment}'
+      Description: 'Disaster Recovery Workflow for Glue project'
+      DefaultRunProperties: {}
+      Tags:
+        ProjectCode: !Ref ProjectCode
+        ProjectName: !Ref ProjectName
+        Environment: !Ref Environment
+
+  DRGlueJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectCode}-${ProjectName}-${DRRoleName}-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - glue.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub '${ProjectCode}-${ProjectName}-DR-Policy-${Environment}'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:*
+                  - s3:*
+                  - logs:*
+                Resource: '*'
+
+  DRGlueJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub '${ProjectCode}-${ProjectName}-${DRJobName}-${Environment}'
+      Role: !Ref DRGlueJobRole
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://${DRBucketCode}/${DRScriptLocation}'
+      DefaultArguments:
+        --TempDir: !Sub 's3://${DRBucketTemp}/'
+        --job-language: python
+      Tags:
+        ProjectCode: !Ref ProjectCode
+        ProjectName: !Ref ProjectName
+        Environment: !Ref Environment
+
+  DRGlueJobTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: !Sub '${ProjectCode}-${ProjectName}-${DRTriggerName}-${Environment}'
+      Type: SCHEDULED
+      Schedule: cron(0 12 * * ? *)
+      Actions:
+        - JobName: !Ref DRGlueJob
+      WorkflowName: !Ref DRGlueWorkflow
+      Tags:
+        ProjectCode: !Ref ProjectCode
+        ProjectName: !Ref ProjectName
+        Environment: !Ref Environment
