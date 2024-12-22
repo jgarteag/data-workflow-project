@@ -113,3 +113,15 @@ Esta organización permite una clara separación de responsabilidades y facilita
    - Revisa los logs generados en CloudWatch para obtener detalles sobre la ejecución del Job.
    ![Monitorear Job en AWS Glue](sources/logs.png)
    ![Monitorear Job en AWS Glue](sources/runs.png)
+
+## Tecnologías Utilizadas
+A continuación se muestran las tecnologías utilizadas en este proyecto:
+
+![AWS](https://raw.githubusercontent.com/github/explore/main/topics/aws/aws.png)
+![AWS Glue](https://raw.githubusercontent.com/github/explore/main/topics/aws-glue/aws-glue.png)
+![CloudFormation](https://raw.githubusercontent.com/github/explore/main/topics/aws-cloudformation/aws-cloudformation.png)
+![S3](https://raw.githubusercontent.com/github/explore/main/topics/aws-s3/aws-s3.png)
+![IAM](https://raw.githubusercontent.com/github/explore/main/topics/aws-iam/aws-iam.png)
+![CloudWatch](https://raw.githubusercontent.com/github/explore/main/topics/aws-cloudwatch/aws-cloudwatch.png)
+![Python](https://raw.githubusercontent.com/github/explore/main/topics/python/python.png)
+![PySpark](https://raw.githubusercontent.com/github/explore/main/topics/pyspark/pyspark.png)
