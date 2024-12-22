@@ -93,7 +93,10 @@ def main() -> None:
     df_final.printSchema()
     
     save_to_s3(df_final, bucket, workflow_params['OUTPUT_TABLE_PATH_S3'])
+<<<<<<< HEAD
     #d
+=======
+>>>>>>> ad3dc2b4a436ad28bd65c84e553fad2c5d0d2227
     
 
 if __name__ == "__main__":
