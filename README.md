@@ -53,3 +53,63 @@ El script principal del proyecto es `DataWkflow-Job.py`, que incluye las siguien
 - `calculate_final_df(df: DataFrame) -> DataFrame`: Calcula columnas adicionales para el conjunto de datos final.
 - `save_to_s3(df: DataFrame, bucket: str, key: str) -> None`: Guarda el conjunto de datos final en S3.
 
+## 🌟 Flujo General de Trabajo
+El flujo de trabajo incluye las siguientes ramas y ambientes:
+
+| **Ambiente**  | **Rama**     | **Propósito**                                              |
+|---------------|--------------|------------------------------------------------------------|
+| 🌱 **Develop**  | `develop`    | Desarrollo y pruebas iniciales.                           |
+| 🚀 **Release**  | `release`    | Validación previa al despliegue en producción.            |
+| 🏆 **Producción**| `main`       | Código estable y aprobado en producción.                  |
+
+## 📂 Organización del Repositorio
+📦 data-workflow-project
+├── 📂 aws-Resrcs
+│   ├── 📂 azure-pipelines.yml
+│   ├── 📂 infraCloudformation-params.json
+│   ├── 📂 infraCloudformation.yaml
+├── 📂 glue-job
+│   ├── 📂 DataWkflow-Job.py
+└── README.md
+
+## Explicación de la Organización del Proyecto
+He organizado el proyecto de esta manera para mantener una estructura clara y modular que facilite el desarrollo y mantenimiento del mismo:
+
+- **aws-Resrcs**: Esta carpeta contiene los archivos relacionados con la infraestructura en la nube, como los parámetros y plantillas de CloudFormation, y el archivo de configuración de Azure Pipelines. Esto permite gestionar y desplegar la infraestructura de manera automatizada y reproducible.
+- **glue-job**: Esta carpeta contiene el script principal del trabajo de AWS Glue (`DataWkflow-Job.py`). Al separar el código del trabajo de Glue en su propia carpeta, se facilita la gestión y el desarrollo del código ETL.
+- **README.md**: El archivo README proporciona una descripción general del proyecto, incluyendo el objetivo, las preguntas a abordar, la elección del modelo, los enfoques para diferentes escenarios, los parámetros del workflow y la estructura del proyecto. También incluye una imagen de la arquitectura y la fuente de los datos.
+
+Esta organización permite una clara separación de responsabilidades y facilita la colaboración y el mantenimiento del proyecto.
+
+## Paso a paso creación proyecto en AWS
+
+1. **Crear el Stack en CloudFormation**
+   - Sube el archivo `infraCloudformation.yaml` a AWS CloudFormation para crear el stack.
+   - Esto configurará la infraestructura necesaria para el proyecto, incluyendo roles IAM, buckets S3 y otros recursos necesarios.
+   ![CloudFormation Stack](sources/stack.png)
+
+2. **Añadir el Dataset al Data Lake (S3)**
+   - Sube el dataset al Data Lake en Amazon S3 en formato Parquet para un mejor procesamiento.
+   - El formato Parquet es eficiente en términos de almacenamiento y rendimiento de consulta.
+   ![Subir Dataset a S3](sources/parquet_file.png)
+
+4. **Crear y Configurar el Job en AWS Glue**
+   - En la consola de AWS Glue, navega a la sección de Jobs y crea un nuevo Job.
+   - Asigna un nombre al Job, por ejemplo, `PRJ001-Glue-Project-GlueJob-ETL-Data-Workflow-DEV`.
+   - Selecciona el rol IAM creado por el stack de CloudFormation.
+   - Configura el script del Job para que apunte al archivo `DataWkflow-Job.py` en tu bucket S3.
+   - Configura las opciones de ejecución, como el tipo de instancia y el número de workers.
+   ![Crear Job en AWS Glue](sources/job.png)
+
+5. **Programar el Job en AWS Glue**
+   - Crea un trigger en AWS Glue para programar la ejecución del Job.
+   - Configura el trigger para que se ejecute diariamente a las 12:00 PM UTC.
+   - Asocia el trigger con el Job `PRJ001-Glue-Project-GlueJob-ETL-Data-Workflow-DEV`.
+   ![Programar Job en AWS Glue](sources/trigger.png)
+
+6. **Ejecutar y Monitorear el Job**
+   - Ejecuta el Job manualmente la primera vez para asegurarte de que todo esté configurado correctamente.
+   - Monitorea la ejecución del Job en la consola de AWS Glue para verificar que se complete sin errores.
+   - Revisa los logs generados en CloudWatch para obtener detalles sobre la ejecución del Job.
+   ![Monitorear Job en AWS Glue](sources/logs.png)
+   ![Monitorear Job en AWS Glue](sources/runs.png)
