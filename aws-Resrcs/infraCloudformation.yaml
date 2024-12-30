@@ -83,18 +83,20 @@ Resources:
   GlueWorkflow:
     Type: AWS::Glue::Workflow
     Properties:
-      Name: !Sub '${ProjectCode}-${ProjectName}-${WorkflowName}-${Environment}'
+      Name: !Sub '${ProjectCode}-${ProjectName}-${WorkflowName}-${Environment}-${AWS::StackName}'
       Description: 'Workflow for Glue project'
       DefaultRunProperties: {}
       Tags:
         ProjectCode: !Ref ProjectCode
         ProjectName: !Ref ProjectName
         Environment: !Ref Environment
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
 
   GlueJobRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${ProjectCode}-${ProjectName}-${RoleName}-${Environment}'
+      RoleName: !Sub '${ProjectCode}-${ProjectName}-${RoleName}-${Environment}-${AWS::StackName}'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -105,7 +107,7 @@ Resources:
             Action:
               - sts:AssumeRole
       Policies:
-        - PolicyName: !Sub '${ProjectCode}-${ProjectName}-Policy-${Environment}'
+        - PolicyName: !Sub '${ProjectCode}-${ProjectName}-Policy-${Environment}-${AWS::StackName}'
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -115,11 +117,13 @@ Resources:
                   - s3:*
                   - logs:*
                 Resource: '*'
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
 
   GlueJob:
     Type: AWS::Glue::Job
     Properties:
-      Name: !Sub '${ProjectCode}-${ProjectName}-${JobName}-${Environment}'
+      Name: !Sub '${ProjectCode}-${ProjectName}-${JobName}-${Environment}-${AWS::StackName}'
       Role: !Ref GlueJobRole
       Command:
         Name: glueetl
@@ -131,11 +135,13 @@ Resources:
         ProjectCode: !Ref ProjectCode
         ProjectName: !Ref ProjectName
         Environment: !Ref Environment
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
 
   GlueJobTrigger:
     Type: AWS::Glue::Trigger
     Properties:
-      Name: !Sub '${ProjectCode}-${ProjectName}-${TriggerName}-${Environment}'
+      Name: !Sub '${ProjectCode}-${ProjectName}-${TriggerName}-${Environment}-${AWS::StackName}'
       Type: SCHEDULED
       Schedule: cron(0 12 * * ? *)
       Actions:
@@ -145,3 +151,5 @@ Resources:
         ProjectCode: !Ref ProjectCode
         ProjectName: !Ref ProjectName
         Environment: !Ref Environment
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
