@@ -43,7 +43,7 @@ Las siguientes son las propiedades de ejecución predeterminadas para el workflo
 | PATH_RAW_DATA          | rawData/housing_data/raw_data.parquet      |
 | TABLE_NAME             | final_real_estate_insumo                   |
 | DATABASE_NAME          | trusted_data                               |
-| OUTPUT_TABLE_PATH_S3   | myownbucket-juanmgart/output               |
+| OUTPUT_TABLE_PATH_S3   | output_files              |
 | GLUE_CATALOG           | AwsDataCatalog                             |
 
 ## Estructura del Proyecto

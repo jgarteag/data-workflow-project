@@ -52,6 +52,7 @@ def data_cleaning(df: DataFrame) -> DataFrame:
     df_clean = df.dropna(subset=['price', 'bed', 'bath'])
     df_clean = df_clean.dropDuplicates()
     df_clean = df_clean.withColumn('prev_sold_date', to_date(df_clean['prev_sold_date'], 'yyyy-MM-dd'))
+    df_clean = df_clean.fillna({'acre_lot': 0})
     
     return df_clean
 
@@ -68,7 +69,8 @@ def calculate_final_df(df: DataFrame) -> DataFrame:
     df = df.withColumn('total_rooms', df['bed'] + df['bath'])
 
     df = df.withColumn('price_per_room', df['price'] / df['total_rooms'])
-
+    
+    # tamaño de la propiedad por terreno
     df = df.withColumn('price_per_acre', df['price'] / df['acre_lot'])
 
     df = df.fillna({'house_age': 0, 'price_per_sqft': 0, 'total_rooms': 0, 'price_per_room': 0, 'price_per_acre': 0})
