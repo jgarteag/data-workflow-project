@@ -8,10 +8,11 @@ Los datos utilizados en este proyecto provienen de [Kaggle](https://www.kaggle.c
 El objetivo de este proyecto es procesar y analizar datos de bienes raíces para generar un conjunto de datos final (`final_real_estate_insumo`) con columnas adicionales calculadas. Este conjunto de datos se utilizará para análisis y obtención de información.
 
 ## Preguntas a Abordar
-- ¿Cuál es el precio promedio por pie cuadrado de las casas en diferentes ciudades?
-- ¿Cómo varía el precio por habitación en diferentes estados?
-- ¿Cuál es la distribución de las edades de las casas en el conjunto de datos?
-- ¿Cómo se comparan los precios de las casas nuevas con las casas más antiguas?
+- ¿Edad de la casa en años?
+- ¿Cúal es el precio por pie cuadrado?
+- ¿Cúal es el número total de habitaciones?
+- ¿Cúal es el precio por habitación?
+- ¿Cúal es el precio de la propiedad por tamaño del terreno?
 
 ## Elección del Modelo
 El modelo elegido para este proyecto implica el uso de AWS Glue para operaciones ETL (Extracción, Transformación y Carga) y Apache Spark para el procesamiento de datos. Esta elección se hizo debido a la escalabilidad y flexibilidad de estas herramientas para manejar grandes conjuntos de datos y transformaciones complejas.
@@ -43,7 +44,7 @@ Las siguientes son las propiedades de ejecución predeterminadas para el workflo
 | PATH_RAW_DATA          | rawData/housing_data/raw_data.parquet      |
 | TABLE_NAME             | final_real_estate_insumo                   |
 | DATABASE_NAME          | trusted_data                               |
-| OUTPUT_TABLE_PATH_S3   | myownbucket-juanmgart/output               |
+| OUTPUT_TABLE_PATH_S3   | output_files              |
 | GLUE_CATALOG           | AwsDataCatalog                             |
 
 ## Estructura del Proyecto
