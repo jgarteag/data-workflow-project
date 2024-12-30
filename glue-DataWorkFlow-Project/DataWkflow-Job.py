@@ -3,6 +3,10 @@ import boto3
 import json
 from typing import Dict, List
 from datetime import date, timedelta
+import pandas as pd
+from io import BytesIO
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 from awsglue.job import Job
 from awsglue.utils import getResolvedOptions
@@ -10,8 +14,10 @@ from awsglue.context import GlueContext
 from pyspark.context import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
-from pyspark.sql.functions import to_date, when, datediff, current_date, year, avg, count
+from pyspark.sql.functions import to_date, when, datediff, current_date, year, avg, count, sum, month, dayofmonth
 
+
+# Initialize Spark and Glue context
 sc = SparkContext()
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
@@ -46,6 +52,7 @@ def data_cleaning(df: DataFrame) -> DataFrame:
     df_clean = df.dropna(subset=['price', 'bed', 'bath'])
     df_clean = df_clean.dropDuplicates()
     df_clean = df_clean.withColumn('prev_sold_date', to_date(df_clean['prev_sold_date'], 'yyyy-MM-dd'))
+    df_clean = df_clean.fillna({'acre_lot': 0})
     
     return df_clean
 
@@ -62,7 +69,8 @@ def calculate_final_df(df: DataFrame) -> DataFrame:
     df = df.withColumn('total_rooms', df['bed'] + df['bath'])
 
     df = df.withColumn('price_per_room', df['price'] / df['total_rooms'])
-
+    
+    # tamaño de la propiedad por terreno
     df = df.withColumn('price_per_acre', df['price'] / df['acre_lot'])
 
     df = df.fillna({'house_age': 0, 'price_per_sqft': 0, 'total_rooms': 0, 'price_per_room': 0, 'price_per_acre': 0})
@@ -71,16 +79,31 @@ def calculate_final_df(df: DataFrame) -> DataFrame:
 
 def save_to_s3(df: DataFrame, bucket: str, key: str) -> None:
     """
-    Save data to S3
+    Save data to S3 as Parquet and overwrite if the file already exists
     :param df: Spark DataFrame
     :param bucket: S3 bucket
     :param key: S3 key
     """
-    df.write.parquet(f"s3://{bucket}/{key}")
+    df = df.withColumn('year', year(current_date()))
+    df = df.withColumn('month', month(current_date()))
+    df = df.withColumn('day', dayofmonth(current_date()))
+    
+    path = f"s3://{bucket}/{key}"
+    print(f"Saving data to S3: {bucket}/{key}")
+    
+    df.write \
+      .mode("overwrite") \
+      .format("parquet") \
+      .option("compression", "snappy") \
+      .partitionBy("year", "month", "day") \
+      .save(path)
+      
+    print(f"Data saved to S3: {bucket}/{key}")
 
 def main() -> None:
     bucket = workflow_params['S3_BUCKET']
     path = workflow_params['PATH_RAW_DATA']
+    output_path = workflow_params['OUTPUT_TABLE_PATH_S3']
     
     df = read_parquet_s3(bucket, path)
     df.printSchema()
@@ -92,7 +115,7 @@ def main() -> None:
     df_final = calculate_final_df(df_clean)
     df_final.printSchema()
     
-    save_to_s3(df_final, bucket, workflow_params['OUTPUT_TABLE_PATH_S3'])
+    save_to_s3(df_final, bucket, output_path)
 
 if __name__ == "__main__":
     main()
