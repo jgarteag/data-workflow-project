@@ -120,16 +120,6 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
 
-  GlueDatabase:
-    Type: AWS::Glue::Database
-    Properties:
-      CatalogId: !Ref 'AWS::AccountId'
-      DatabaseInput:
-        Name: trusted_data_data_engineer
-        Description: 'Database for trusted data'
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-
   GlueJob:
     Type: AWS::Glue::Job
     Properties:
